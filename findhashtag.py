@@ -42,6 +42,7 @@ for seq in range(start_seq, end_seq + 1):
         hashtags.update(found)
 
         print(f"[{seq}] found: {found}")
+        
     except Exception as e:
         print(f"[{seq}] error: {e}")
 
