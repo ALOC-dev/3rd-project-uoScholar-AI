@@ -42,7 +42,6 @@ for seq in range(start_seq, end_seq + 1):
         hashtags.update(found)
 
         print(f"[{seq}] found: {found}")
-        time.sleep(0.5)  # 예의상 딜레이 추가
     except Exception as e:
         print(f"[{seq}] error: {e}")
 
