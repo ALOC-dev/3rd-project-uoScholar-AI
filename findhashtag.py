@@ -37,7 +37,7 @@ for seq in range(start_seq, end_seq + 1):
         soup = BeautifulSoup(res.text, 'html.parser')
         body_text = soup.get_text()
 
-        found = re.findall(r'#([가-힣\w\s\.\-\(\)\!\?\{\}\[\]\"\'\;\:]+)', body_text)
+        found = re.findall(r'#([가-힣\w\.\-\(\)\!\?\{\}\[\]\"\'\;\:]+)', body_text)
         hashtags.update(found)
 
         print(f"[{seq}] found: {found}")
