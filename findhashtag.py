@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import time
 
 base_url = "https://www.uos.ac.kr/korNotice/view.do"
 headers = {
@@ -38,11 +37,10 @@ for seq in range(start_seq, end_seq + 1):
         soup = BeautifulSoup(res.text, 'html.parser')
         body_text = soup.get_text()
 
-        found = re.findall(r'#\w+', body_text)
+        found = re.findall(r'#([가-힣\w\s\.\-\(\)\!\?\{\}\[\]\"\'\;\:]+)', body_text)
         hashtags.update(found)
 
         print(f"[{seq}] found: {found}")
-        time.sleep(0.5)  # 예의상 딜레이 추가
     except Exception as e:
         print(f"[{seq}] error: {e}")
 
