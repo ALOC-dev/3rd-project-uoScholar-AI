@@ -9,7 +9,7 @@ import re
 
 # 1. 환경 변수 및 GPT 설정
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = 
+os.environ["OPENAI_API_KEY"] = " "
 llm = ChatOpenAI(model="gpt-4o", temperature=0.2)
 
 # 2. FastAPI 앱 생성
