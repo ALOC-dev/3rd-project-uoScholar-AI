@@ -16,7 +16,7 @@ def show_data():
     cursor = conn.cursor()
 
     # 조회할 테이블 이름 넣기 (예: posts)
-    query = "SELECT * FROM notice LIMIT 10;"
+    query = "SELECT * FROM notice limit 5;"
     cursor.execute(query)
 
     # 결과 가져오기

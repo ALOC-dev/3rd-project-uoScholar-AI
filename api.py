@@ -5,7 +5,7 @@ from langchain_openai import ChatOpenAI  # 최신 OpenAI Chat 모델
 
 # 환경변수 로드
 load_dotenv()
-os.environ["OPENAI_API_KEY"] =
+os.environ["OPENAI_API_KEY"] = "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"
 
 llm = ChatOpenAI(model="gpt-4o", temperature=0.2)
 
