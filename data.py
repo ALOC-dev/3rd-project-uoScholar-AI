@@ -5,7 +5,7 @@ def get_connection():
     return mysql.connector.connect(
         host="uoscholar.cdkke4m4o6zb.ap-northeast-2.rds.amazonaws.com",
         user="admin",
-        password="dongha1005!",
+        password="",
         database="uoscholar_db",
         port=3306
     )
@@ -16,7 +16,7 @@ def show_data():
     cursor = conn.cursor()
 
     # 조회할 테이블 이름 넣기 (예: posts)
-    query = "SELECT * FROM notice LIMIT 10;"
+    query = "SELECT * FROM notice;"
     cursor.execute(query)
 
     # 결과 가져오기
