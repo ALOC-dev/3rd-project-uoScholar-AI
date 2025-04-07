@@ -5,7 +5,7 @@ def get_connection():
     return mysql.connector.connect(
         host="uoscholar.cdkke4m4o6zb.ap-northeast-2.rds.amazonaws.com",
         user="admin",
-        password="dongha1005!",
+        password="",
         database="uoscholar_db",
         port=3306
     )
