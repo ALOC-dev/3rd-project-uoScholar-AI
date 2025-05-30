@@ -55,8 +55,9 @@ def search_similar_notices(user_input, top_n=5):
         try:
             notice_vector = json.loads(row["vector"])
             score = cosine_similarity(query_vector, notice_vector)
-            row["similarity"] = score
-            scored.append(row)
+            if score > 0.65:
+                row["similarity"] = score
+                scored.append(row)
         except Exception as e:
             print(f" 벡터 파싱 오류 (id={row['id']}):", e)
 
@@ -68,7 +69,10 @@ if __name__ == "__main__":
     user_question = input("질문을 입력하세요: ")
     results = search_similar_notices(user_question)
 
-    print("\n유사 공지 결과:")
-    for r in results:
-        print(f"- {r['posted_date']} | {r['department']} | {r['title']}")
-        print(f"  링크: {r['link']} | 유사도: {r['similarity']:.4f}")
+    if not results:
+        print("관련된 공지가 없습니다.")
+    else:
+        print("\n유사 공지 결과:")
+        for r in results:
+            print(f"- {r['posted_date']} | {r['department']} | {r['title']}")
+            print(f"  링크: {r['link']} | 유사도: {r['similarity']:.4f}")
