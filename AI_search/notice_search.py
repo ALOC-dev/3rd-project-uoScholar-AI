@@ -77,8 +77,18 @@ def search_similar_notices(user_input, top_n=5):
         except Exception as e:
             print(f" 벡터 파싱 오류 (id={row['id']}):", e)
 
-    scored.sort(key=lambda x: x["similarity"], reverse=True)
-    return scored[:top_n]
+        scored.sort(key=lambda x: x["similarity"], reverse=True)
+
+        cleaned = [
+            {
+                "title": row["title"],
+                "department": row["department"],
+                "link": row["link"],
+                "posted_date": row["posted_date"]
+            }
+            for row in scored[:top_n]
+        ]
+        return cleaned
 
 # 7. 실행부
 if __name__ == "__main__":
