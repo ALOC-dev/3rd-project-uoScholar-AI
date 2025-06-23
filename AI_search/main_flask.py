@@ -13,7 +13,8 @@ def search():
     user_input = data["user_input"]
     results = search_similar_notices(user_input)
 
-    return jsonify(results)
+    # 리스트를 'results' 키로 감싸서 반환
+    return jsonify({"results": results})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
