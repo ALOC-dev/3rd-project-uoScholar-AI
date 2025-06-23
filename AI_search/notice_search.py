@@ -12,13 +12,17 @@ client = OpenAI(api_key=api_key)
 
 # 2. DB 연결 함수
 def get_connection():
-    return mysql.connector.connect(
-        host="uoscholar.cdkke4m4o6zb.ap-northeast-2.rds.amazonaws.com",
-        user="admin",
-        password="dongha1005!",
-        database="uoscholar_db",
-        port=3306
-    )
+    try:
+        return mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME"),
+            port=int(os.getenv("DB_PORT", 3306))
+        )
+    except mysql.connector.Error as e:
+        print(f"DB 연결 실패: {e}")
+        return None
 
 # 3. 임베딩 함수
 def embed_text(text: str) -> list:
@@ -35,7 +39,7 @@ def embed_text(text: str) -> list:
 
 # 4. 사용자 입력 포맷 변환 함수 (GPT 사용)
 def format_user_query(user_input: str) -> str:
-    try:
+    try:    
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -77,18 +81,18 @@ def search_similar_notices(user_input, top_n=5):
         except Exception as e:
             print(f" 벡터 파싱 오류 (id={row['id']}):", e)
 
-        scored.sort(key=lambda x: x["similarity"], reverse=True)
+    scored.sort(key=lambda x: x["similarity"], reverse=True)
 
-        cleaned = [
-            {
-                "title": row["title"],
-                "department": row["department"],
-                "link": row["link"],
-                "posted_date": row["posted_date"]
-            }
-            for row in scored[:top_n]
-        ]
-        return cleaned
+    cleaned = [
+        {
+            "title": row["title"],
+            "department": row["department"],
+            "link": row["link"],
+            "posted_date": row["posted_date"],
+        }
+        for row in scored[:top_n]
+    ]
+    return cleaned
 
 # 7. 실행부
 if __name__ == "__main__":
@@ -96,9 +100,9 @@ if __name__ == "__main__":
     results = search_similar_notices(user_question)
 
     if not results:
-        print(" 관련된 공지가 없습니다.")
+        print("관련된 공지가 없습니다.")
     else:
-        print("\n 유사 공지 결과:")
+        print("\n유사 공지 결과:")
         for r in results:
-            print(f"- {r['posted_date']} | {r['department']} | {r['title']}")
-            print(f"  링크: {r['link']} | 유사도: {r['similarity']:.4f}")
+            print(f"-{r['posted_date']} | {r['department']} | {r['title']}")
+            print(f"링크: {r['link']}")
