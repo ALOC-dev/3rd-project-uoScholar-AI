@@ -9,11 +9,10 @@ UoScholar는 서울시립대학교 공지사항 데이터를 크롤링하고, �
 ---
 
 ## 전체 흐름도
-1. 사용자가(Client) 자연어 형태로 질문을 입력한다.  
-2. 질문에서 핵심 키워드(작성자, 제목 등)를 추출한다.  
-3. DB에서 질문과 가장 유사한 공지를 검색한다.  
-4. 검색된 공지를 사용자에게 제공하는 동시에, 질문 의도에 맞는 자연스러운 응답으로 재구성한다.  
-5. 완성된 답변을 Client로 전송하여 출력한다.  
+1. 사용자가(Client) 자연어 형태로 질문을 입력한다.   
+2. DB에서 질문과 가장 유사한 공지를 검색한다.  
+3. 검색된 공지를 사용자에게 제공하는 동시에, 질문 의도에 맞는 자연스러운 응답으로 재구성한다.  
+4. 완성된 답변을 Client로 전송하여 출력한다.  
 
 ---
 
@@ -24,6 +23,77 @@ UoScholar는 서울시립대학교 공지사항 데이터를 크롤링하고, �
 - 📌 **챗봇 인터페이스**: 학생들이 채팅을 통해 학교 정보에 대한 질의응답 가능  
 
 ---
+## 📌 설치 및 실행 방법
+
+# 1. clone repository
+git clone https://github.com/ALOC-dev/3rd-project-uoScholar-AI.git
+cd 3rd-project-uoScholar-AI
+
+# 2. 가상환경 생성 및 활성화
+python -m venv venv
+source venv/bin/activate   # Mac/Linux
+venv\Scripts\activate      # Windows
+
+# 3. requirements 설치
+pip install -r requirements.txt
+
+# 4. requirements.txt (예시)
+fastapi
+uvicorn
+requests
+beautifulsoup4
+mysql-connector-python
+openai
+langchain-openai
+python-dotenv
+playwright
+
+# 5. Playwright 브라우저 설치
+playwright install chromium
+
+# 6. .env 파일 설정
+OPENAI_API_KEY=sk-xxxxxx
+
+# 7. 크롤러 실행 (공지사항 크롤링 및 DB 저장)
+python pdf_crawler.py
+
+# 8. 서버 실행 (FastAPI)
+uvicorn server:app --reload --host 0.0.0.0 --port 8000
+
+---
+
+## 📌 API Example
+
+# Request
+POST /analyze_question
+Content-Type: application/json
+
+{
+  "question": "2024년 장학금 신청 공지 알려줘"
+}
+
+# Response
+{
+  "extracted_keywords": {
+    "title_keywords": ["장학금"],
+    "writer_keywords": ["학생처"],
+    "year": 2024
+  },
+  "search_results": [
+    {
+      "posted_date": "2024-03-01",
+      "department": "학생처",
+      "title": "2024학년도 1학기 장학금 신청 안내",
+      "link": "https://www.uos.ac.kr/..."
+    }
+  ],
+  "gpt_answer": "2024학년도 1학기 장학금 신청은 학생처에서 진행되며 3월 1일부터 접수 시작됩니다."
+}
+
+
+
+---
+
 
 ## 기술 스택
 - **Language**: Python  
