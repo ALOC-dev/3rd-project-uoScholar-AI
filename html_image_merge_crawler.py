@@ -38,24 +38,23 @@ BASE_DIR = os.path.abspath(os.getcwd())
 OUT_DIR = os.path.join(BASE_DIR, "notices_img")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# DB 연결 정보
 DB_CONFIG = {
-    "host": "uoscholar.cdkke4m4o6zb.ap-northeast-2.rds.amazonaws.com",
-    "user": "admin",
-    "password": "dongha1005!",
-    "database": "uoscholar_db",
-    "port": 3306,
-    "charset": "utf8mb4",
-    "autocommit": False,
-    "use_pure": True,
-    "connection_timeout": 10,
-    "raise_on_warnings": True,
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "charset": os.getenv("DB_CHARSET", "utf8mb4"),
+    "autocommit": os.getenv("DB_AUTOCOMMIT", "False") == "True",
+    "use_pure": os.getenv("DB_USE_PURE", "True") == "True",
+    "connection_timeout": int(os.getenv("DB_CONN_TIMEOUT", "10")),
+    "raise_on_warnings": os.getenv("DB_WARNINGS", "True") == "True",
 }
 
 # OpenAI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
-SUMMARIZE_MODEL = "gpt-4o"  # 정확도 우선 (비용 낮추려면 gpt-4o-mini)
+SUMMARIZE_MODEL = "gpt-4o"  
 EMBED_MODEL = "text-embedding-3-small"
 
 #################################################################################
@@ -610,13 +609,13 @@ def collect_recent_seqs(list_id: str,
 if __name__ == "__main__":
     # 여기 카테고리 추가하면 크롤링
     targets = [
-        "COLLEGE_ENGINEERING",
-        "COLLEGE_HUMANITIES",
-        "COLLEGE_SOCIAL_SCIENCES",
-        "COLLEGE_URBAN_SCIENCE",
-        "COLLEGE_ARTS_SPORTS",
-        "COLLEGE_BUSINESS",
-        "COLLEGE_NATURAL_SCIENCES",
+        # "COLLEGE_ENGINEERING",
+        # "COLLEGE_HUMANITIES",
+        # "COLLEGE_SOCIAL_SCIENCES",
+        # "COLLEGE_URBAN_SCIENCE",
+        # "COLLEGE_ARTS_SPORTS",
+        # "COLLEGE_BUSINESS",
+        # "COLLEGE_NATURAL_SCIENCES",
         "COLLEGE_LIBERAL_CONVERGENCE",
     ]
 
