@@ -19,6 +19,7 @@ from mysql.connector import Error as MySQLError
 
 from openai import OpenAI
 from PIL import Image  # 이미지 처리
+from datetime import date, datetime
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -431,6 +432,13 @@ def exists_notice(category: str, post_number: int, posted_date: Optional[str]) -
         cur.close()
         return exists
 
+def _ymd(x: Optional[object]) -> Optional[str]:
+    if x is None:
+        return None
+    if isinstance(x, (datetime, date)):
+        return x.strftime("%Y-%m-%d")
+    s = str(x).strip()
+    return s[:10]
 
 # =========================
 # 6) 파이프라인: 한 건 처리 (HTML 텍스트 + 이미지 동시 요약)
@@ -457,16 +465,18 @@ def process_one(category_key: str, list_id: str, seq: int) -> str:
     link = f"{BASE_URL}?list_id={list_id}&seq={seq}"
 
     # 4) 중복 체크
-    prev_dt = get_existing_posted_date(category_key, post_number)
+    prev_dt_raw = get_existing_posted_date(category_key, post_number)
+    prev_dt = _ymd(prev_dt_raw)
+    curr_dt = _ymd(posted_date)
 
     if prev_dt:
-        if prev_dt == posted_date:
+        if prev_dt == curr_dt:
             # 날짜까지 동일 → 스킵
-            print(f"Seq {seq} (post_number={post_number}) 이미 존재 (posted_date={posted_date}) → 스킵")
+            print(f"Seq {seq} (post_number={post_number}) 이미 존재 (posted_date={curr_dt}) → 스킵")
             return "stored"
         else:
-            # 날짜가 다름 → 수정된 게시물로 간주, 업데이트 진행
-            print(f"Seq {seq} (post_number={post_number}) 날짜 변경 {prev_dt} → {posted_date}, 업데이트 진행")
+            # 날짜가 다름 → 수정된 게시물로 간주
+            print(f"Seq {seq} (post_number={post_number}) 날짜 변경 {prev_dt} → {curr_dt}, 업데이트 진행")
 
     # 4-1) HTML 본문 텍스트 추출
     html_text = extract_main_text_from_html(html)
