@@ -323,7 +323,7 @@ def embed_text(text: str) -> list:
 # =========================
 # 4) HTML 파싱 (상세)
 # =========================
-CONNECT_TIMEOUT = 5    # 서버 TCP 연결까지 기다릴 최대 시간
+CONNECT_TIMEOUT = 10    # 서버 TCP 연결까지 기다릴 최대 시간
 READ_TIMEOUT    = 20   # 실제 응답(HTML)을 받는 시간
 
 def fetch_notice_html(list_id: str, seq: int) -> Optional[str]:
