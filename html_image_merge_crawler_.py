@@ -48,7 +48,7 @@ DB_CONFIG = {
     "charset": os.getenv("DB_CHARSET", "utf8mb4"),
     "autocommit": os.getenv("DB_AUTOCOMMIT", "False") == "True",
     "use_pure": os.getenv("DB_USE_PURE", "True") == "True",
-    "connection_timeout": int(os.getenv("DB_CONN_TIMEOUT", "10")),
+    "connection_timeout": int(os.getenv("DB_CONN_TIMEOUT")),
     "raise_on_warnings": os.getenv("DB_WARNINGS", "True") == "True",
 }
 
@@ -86,7 +86,7 @@ LIST_URL = "https://www.uos.ac.kr/korNotice/list.do"
 # 몇 개 크롤링할 건지 
 REQUEST_SLEEP = 1.0
 MISSING_BREAK = 3
-PLAYWRIGHT_TIMEOUT_MS = 45000
+PLAYWRIGHT_TIMEOUT_MS = 90000
 RECENT_WINDOW = 100
 
 SUMMARY_PROMPT = """ 
@@ -220,7 +220,7 @@ def html_to_images_playwright(
 
             for _ in range(6):
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                page.wait_for_timeout(600)
+                page.wait_for_timeout(700)
 
             page.wait_for_load_state("networkidle", timeout=timeout_ms)
             page.wait_for_timeout(800)
@@ -323,6 +323,9 @@ def embed_text(text: str) -> list:
 # =========================
 # 4) HTML 파싱 (상세)
 # =========================
+CONNECT_TIMEOUT = 5    # 서버 TCP 연결까지 기다릴 최대 시간
+READ_TIMEOUT    = 20   # 실제 응답(HTML)을 받는 시간
+
 def fetch_notice_html(list_id: str, seq: int) -> Optional[str]:
     try:
         params = {
@@ -340,7 +343,7 @@ def fetch_notice_html(list_id: str, seq: int) -> Optional[str]:
             "menuid": "",
         }
         headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(BASE_URL, params=params, headers=headers, timeout=10)
+        r = requests.get(BASE_URL, params=params, headers=headers, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
         if r.status_code != 200:
             print(f"❌ HTTP {r.status_code} for seq={seq}")
             return None
@@ -600,7 +603,7 @@ def collect_recent_seqs(list_id: str,
         if extra_params:
             params.update(extra_params)
 
-        r = requests.get(LIST_URL, params=params, headers=headers, timeout=10)
+        r = requests.get(LIST_URL, params=params, headers=headers, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
         if r.status_code != 200:
             print(f"❌ 목록 HTTP {r.status_code} (list_id={list_id}, page={page}, params={params})")
             break
@@ -633,16 +636,16 @@ def collect_recent_seqs(list_id: str,
 if __name__ == "__main__":
     # 여기 카테고리 추가하면 크롤링
     targets = [
-        "COLLEGE_ENGINEERING",
-        "COLLEGE_HUMANITIES",
-        "COLLEGE_SOCIAL_SCIENCES",
-        "COLLEGE_URBAN_SCIENCE",
-        "COLLEGE_ARTS_SPORTS",
-        "COLLEGE_BUSINESS",
-        "COLLEGE_NATURAL_SCIENCES",
-        "COLLEGE_LIBERAL_CONVERGENCE",
-        "GENERAL",
-        "ACADEMIC"
+        "COLLEGE_ENGINEERING"
+        # "COLLEGE_HUMANITIES",
+        # "COLLEGE_SOCIAL_SCIENCES",
+        # "COLLEGE_URBAN_SCIENCE",
+        # "COLLEGE_ARTS_SPORTS",
+        # "COLLEGE_BUSINESS",
+        # "COLLEGE_NATURAL_SCIENCES",
+        # "COLLEGE_LIBERAL_CONVERGENCE",
+        # "GENERAL",
+        # "ACADEMIC"
     ]
 
     for cat in targets:
@@ -651,7 +654,7 @@ if __name__ == "__main__":
             print(f"⏭️  {cat}: list_id 미설정 → 건너뜀")
             continue
 
-        extra = CATEGORY_LIST_PARAMS.get(cat)
+        extra = None
         seqs = collect_recent_seqs(list_id, extra_params=extra, limit=RECENT_WINDOW, max_pages=10)
 
         if not seqs:
