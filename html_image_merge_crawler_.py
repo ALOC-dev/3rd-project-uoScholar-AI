@@ -633,6 +633,7 @@ def collect_recent_seqs(list_id: str,
 # =========================
 # 8) 실행부
 # =========================
+print(f"BASE_DIR is {BASE_DIR}")
 if __name__ == "__main__":
     # 여기 카테고리 추가하면 크롤링
     targets = [
