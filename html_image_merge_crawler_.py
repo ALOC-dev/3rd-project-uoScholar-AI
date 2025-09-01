@@ -182,8 +182,6 @@ def extract_main_text_from_html(html: str, max_chars: int = 12000) -> str:
 # =========================
 # 2) Playwright로 HTML → 이미지 캡처
 # =========================
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-
 def html_to_images_playwright(
     url: str,
     viewport_width: int = 1200,
@@ -213,26 +211,38 @@ def html_to_images_playwright(
                 viewport={"width": viewport_width, "height": slice_height},
                 device_scale_factor=2.0,
             )
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
-            except PlaywrightTimeoutError as e:
-                print(f"Playwright TimeoutError on page.goto: {e}")
-                return []
-            try:
-                page.wait_for_load_state("networkidle", timeout=timeout_ms)
-            except PlaywrightTimeoutError as e:
-                print(f"Playwright TimeoutError on wait_for_load_state: {e}")
-                return []
-            
-            page.screenshot(path=debug_full_image_path, full_page=True)
+                page.wait_for_selector("div.vw-tibx", timeout=timeout_ms)
+            except Exception:
+                pass
+
+            for _ in range(6):
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(700)
+
+            page.wait_for_load_state("networkidle", timeout=timeout_ms)
+            page.wait_for_timeout(800)
+
+            # 전체 페이지 스크린샷
+            if full_image_format.lower() == "png":
+                buf = page.screenshot(full_page=True, type="png")
+            else:
+                buf = page.screenshot(full_page=True, type="jpeg", quality=85)
             browser.close()
 
         # 전체 페이지 한 장 저장(테스트/디버그)
         if debug_full_image_path:
-            print(f"💾 Full screenshot saved: {debug_full_image_path}")
+            try:
+                with open(debug_full_image_path, "wb") as f:
+                    f.write(buf)
+                print(f"💾 Full screenshot saved: {debug_full_image_path}")
+            except Exception as e:
+                print(f"⚠️ Full screenshot save failed: {e}")
 
         # 슬라이스 분할
-        full_img = Image.open(debug_full_image_path).convert("RGB")
+        full_img = Image.open(BytesIO(buf)).convert("RGB")
         W, H = full_img.size
         y = 0
         while y < H:
@@ -313,8 +323,6 @@ def embed_text(text: str) -> list:
 # =========================
 # 4) HTML 파싱 (상세)
 # =========================
-from requests.exceptions import Timeout, RequestException
-
 CONNECT_TIMEOUT = 10    # 서버 TCP 연결까지 기다릴 최대 시간
 READ_TIMEOUT    = 20   # 실제 응답(HTML)을 받는 시간
 
@@ -336,41 +344,104 @@ def fetch_notice_html(list_id: str, seq: int) -> Optional[str]:
         }
         headers = {"User-Agent": "Mozilla/5.0"}
         r = requests.get(BASE_URL, params=params, headers=headers, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
-        r.raise_for_status()  # HTTP 오류 상태가 발생하면 예외 발생
+        if r.status_code != 200:
+            print(f"❌ HTTP {r.status_code} for seq={seq}")
+            return None
         return r.text
-    except Timeout as e:
-        print(f"API Timeout Error: {e} for seq={seq}")
-        return None
-    except RequestException as e:
-        print(f"API Request Error: {e} for seq={seq}")
-        return None
     except Exception as e:
-        print(f"General Error: {e} for seq={seq}")
+        print(f"❌ 요청 실패 seq={seq}: {e}")
         return None
 
 
+def parse_notice_fields(html: str, seq: int) -> Optional[dict]:
+    soup = BeautifulSoup(html, "html.parser")
+    title_el = soup.select_one("div.vw-tibx h4") if soup else None
+    title = title_el.get_text(strip=True) if title_el else ""
+    if not title:
+        return None  # 게시물 없음
+
+    spans = soup.select("div.vw-tibx div.zl-bx div.da span")
+    department = spans[1].get_text(strip=True) if len(spans) >= 3 else ""
+    date_text = spans[2].get_text(strip=True) if len(spans) >= 3 else ""
+    dt = parse_date_yyyy_mm_dd(date_text) or datetime.now().strftime("%Y-%m-%d")
+
+    post_number_el = soup.select_one("input[name=seq]")
+    post_number = int(post_number_el["value"]) if post_number_el and post_number_el.get("value") else int(seq)
+
+    content_text = soup.get_text("\n", strip=True)
+    return {
+        "title": title,
+        "department": department,
+        "posted_date": dt,
+        "post_number": post_number,
+        "content_text": content_text,
+    }
+
+
 # =========================
-# 5) DB 연결 예외 처리
+# 5) DB 업서트
 # =========================
-def connect_to_db():
-    try:
-        connection = mysql.connector.connect(
-            host=DB_CONFIG["host"],
-            user=DB_CONFIG["user"],
-            password=DB_CONFIG["password"],
-            database=DB_CONFIG["database"],
-            port=DB_CONFIG["port"],
-            connection_timeout=DB_CONFIG["connection_timeout"]
+UPSERT_SQL = """
+INSERT INTO notice
+    (category, post_number, title, link, summary, embedding_vector, posted_date, department)
+VALUES
+    (%s, %s, %s, %s, %s, %s, %s, %s) AS new
+ON DUPLICATE KEY UPDATE
+    title = new.title,
+    link = new.link,
+    summary = new.summary,
+    embedding_vector = new.embedding_vector,
+    posted_date = new.posted_date,
+    department = new.department
+"""
+
+
+UPSERT_SQL = UPSERT_SQL.replace("new.posted_date", "new.posted_date")
+
+EXISTS_SQL = "SELECT posted_date FROM notice WHERE category=%s AND post_number=%s LIMIT 1"
+
+def get_existing_posted_date(category: str, post_number: int) -> Optional[str]:
+    with mysql_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(EXISTS_SQL, (category, post_number))
+        row = cur.fetchone()
+        cur.close()
+        return row[0] if row else None
+
+def upsert_notice(row: dict):
+    with mysql_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            UPSERT_SQL,
+            (
+                row["category"],
+                row["post_number"],
+                row["title"],
+                row["link"],
+                row.get("summary") or None,
+                row.get("embedding_vector") or None,
+                row["posted_date"],
+                row.get("department") or None,
+            ),
         )
-        if connection.is_connected():
-            print("DB 연결 성공")
-            return connection
-    except MySQLError as e:
-        print(f"DB 연결 실패: {e}")
+        cur.close()
+
+
+def exists_notice(category: str, post_number: int, posted_date: Optional[str]) -> bool:
+    with mysql_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(EXISTS_SQL, (category, post_number, posted_date))
+        exists = cur.fetchone() is not None
+        cur.close()
+        return exists
+
+def _ymd(x: Optional[object]) -> Optional[str]:
+    if x is None:
         return None
-    except Exception as e:
-        print(f"DB 연결 중 알 수 없는 오류 발생: {e}")
-        return None
+    if isinstance(x, (datetime, date)):
+        return x.strftime("%Y-%m-%d")
+    s = str(x).strip()
+    return s[:10]
 
 # =========================
 # 6) 파이프라인: 한 건 처리 (HTML 텍스트 + 이미지 동시 요약)
