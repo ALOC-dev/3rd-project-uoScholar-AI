@@ -637,16 +637,16 @@ print(f"Screenshot directory: {OUT_DIR}")
 if __name__ == "__main__":
     # 여기 카테고리 추가하면 크롤링
     targets = [
-        "COLLEGE_ENGINEERING",
-        "COLLEGE_HUMANITIES",
-        "COLLEGE_SOCIAL_SCIENCES",
-        "COLLEGE_URBAN_SCIENCE",
-        "COLLEGE_ARTS_SPORTS",
-        "COLLEGE_BUSINESS",
-        "COLLEGE_NATURAL_SCIENCES",
-        "COLLEGE_LIBERAL_CONVERGENCE",
-        "GENERAL",
-        "ACADEMIC"
+        "COLLEGE_ENGINEERING"
+        # "COLLEGE_HUMANITIES",
+        # "COLLEGE_SOCIAL_SCIENCES",
+        # "COLLEGE_URBAN_SCIENCE",
+        # "COLLEGE_ARTS_SPORTS",
+        # "COLLEGE_BUSINESS",
+        # "COLLEGE_NATURAL_SCIENCES",
+        # "COLLEGE_LIBERAL_CONVERGENCE",
+        # "GENERAL",
+        # "ACADEMIC"
     ]
 
     for cat in targets:
