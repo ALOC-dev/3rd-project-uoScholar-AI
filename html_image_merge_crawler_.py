@@ -36,7 +36,7 @@ except Exception:
 # 0) 환경설정
 # =========================
 BASE_DIR = os.path.abspath(os.getcwd())
-OUT_DIR = os.path.join(BASE_DIR, "notices_img")
+OUT_DIR = os.path.join(BASE_DIR, "screenshot")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 DB_CONFIG = {
