@@ -48,7 +48,7 @@ DB_CONFIG = {
     "charset": os.getenv("DB_CHARSET", "utf8mb4"),
     "autocommit": os.getenv("DB_AUTOCOMMIT", "False") == "True",
     "use_pure": os.getenv("DB_USE_PURE", "True") == "True",
-    "connection_timeout": int(os.getenv("DB_CONN_TIMEOUT")),
+    "connection_timeout": int(os.getenv("DB_CONN_TIMEOUT", 20)),
     "raise_on_warnings": os.getenv("DB_WARNINGS", "True") == "True",
 }
 
