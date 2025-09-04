@@ -20,6 +20,7 @@ from mysql.connector import Error as MySQLError
 from openai import OpenAI
 from PIL import Image  # 이미지 처리
 from datetime import date, datetime
+import sys, traceback
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -263,7 +264,7 @@ def pil_to_data_url(pil_image: Image.Image, fmt="JPEG", quality=80) -> str:
     bio = BytesIO()
     pil_image.save(bio, format=fmt, quality=quality, optimize=True)
     b64 = base64.b64encode(bio.getvalue()).decode("utf-8")
-    
+
     return f"data:image/{fmt.lower()};base64,{b64}"
 
 def summarize_with_text_and_images(html_text: str, images: List[Image.Image]) -> str:
@@ -300,9 +301,9 @@ def summarize_with_text_and_images(html_text: str, images: List[Image.Image]) ->
         )
         return (resp.output_text or "").strip()
     except Exception as e:
-        print(f"❌ 텍스트+이미지 요약 실패: {e}")
+        print(f"❌ 텍스트+이미지 요약 실패: {type(e).__name__}: {e}")
+        traceback.print_exc(limit=2, file=sys.stdout)
         return ""
-
 
 def embed_text(text: str) -> list:
     if not text:
