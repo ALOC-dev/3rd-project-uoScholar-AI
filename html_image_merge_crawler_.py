@@ -54,7 +54,7 @@ DB_CONFIG = {
 }
 
 # OpenAI
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY").strip()
 client = OpenAI(api_key=OPENAI_API_KEY)
 SUMMARIZE_MODEL = "gpt-4o"  
 EMBED_MODEL = "text-embedding-3-small"
