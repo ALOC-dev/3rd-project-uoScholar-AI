@@ -1,3 +1,5 @@
+# html_image_merge_crawler.py
+
 import os
 import time
 import json
@@ -259,15 +261,10 @@ def html_to_images_playwright(
 # =========================
 def pil_to_data_url(pil_image: Image.Image, fmt="JPEG", quality=80) -> str:
     bio = BytesIO()
-    if fmt.upper() == "PNG":
-        pil_image.save(bio, format="PNG", optimize=True)
-        b64 = base64.b64encode(bio.getvalue()).decode("utf-8")
-        return f"data:image/png;base64,{b64}"
-    else:
-        pil_image.save(bio, format=fmt, quality=quality, optimize=True)
-        b64 = base64.b64encode(bio.getvalue()).decode("utf-8")
-        return f"data:image/{fmt.lower()};base64,{b64}"
-
+    pil_image.save(bio, format=fmt, quality=quality, optimize=True)
+    b64 = base64.b64encode(bio.getvalue()).decode("utf-8")
+    
+    return f"data:image/{fmt.lower()};base64,{b64}"
 
 def summarize_with_text_and_images(html_text: str, images: List[Image.Image]) -> str:
     """
@@ -293,7 +290,7 @@ def summarize_with_text_and_images(html_text: str, images: List[Image.Image]) ->
     for img in images:
         contents.append({
             "type": "input_image",
-            "image_url": pil_to_data_url(img, fmt="PNG", quality=90)  # PNG로 가독성 확보
+            "image_url": pil_to_data_url(img, fmt="JPEG", quality=75)  # JPEG로 압축
         })
     try:
         resp = client.responses.create(
@@ -635,9 +632,9 @@ print(f"Screenshot directory: {OUT_DIR}")
 if __name__ == "__main__":
     # 여기 카테고리 추가하면 크롤링
     targets = [
-        # "COLLEGE_ENGINEERING",
+        "COLLEGE_ENGINEERING"
         # "COLLEGE_HUMANITIES",
-         "COLLEGE_SOCIAL_SCIENCES"
+        # "COLLEGE_SOCIAL_SCIENCES",
         # "COLLEGE_URBAN_SCIENCE",
         # "COLLEGE_ARTS_SPORTS",
         # "COLLEGE_BUSINESS",
@@ -664,3 +661,5 @@ if __name__ == "__main__":
         for seq in reversed(seqs):
             process_one(cat, list_id, seq)
             time.sleep(REQUEST_SLEEP)
+
+
